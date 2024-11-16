@@ -27,6 +27,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+#Celery
+
+CELERY_BROKER_URL = 'amqp://otlvzjsh:9ca3dasMysqshBXsWwvaB0Bf0GZSWexD@jackal.rmq.cloudamqp.com/otlvzjsh'
+CELERY_RESULT_BACKEND = 'redis://default:TuRUNrLhvCI02ezrVeVWHx3gG7BRIV1k@redis-10551.c308.sa-east-1-1.ec2.redns.redis-cloud.com:10551/0'
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIME_ZONE = 'UTC'
 
 # Application definition
 
@@ -39,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'notifications',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
