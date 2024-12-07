@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  # Servicio para la aplicación Django
+  web:
+    build: .
+    container_name: drf_app
+    command: >
+      bash -c "
+        python manage.py makemigrations &&
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  celery:
+    build: .
+    container_name: drf_celery
+    command: ["celery", "-A", "notification_project", "worker", "--loglevel=info"]
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+
+  db:
+    image: postgres:14
+    container_name: drf_postgres
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+   test:
+    build: .
+    container_name: drf_test
+    command: >
+      bash -c "
+        pytest
+      "
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
+
+

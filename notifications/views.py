@@ -26,6 +26,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
         return Response({'status': f'Notification {pk} marked as read'})
 
+    
     @action(detail=False, methods=['post'])
     def unread2(self, request):
         user_id = request.data.get('user_id')
@@ -46,10 +47,6 @@ class NotificationViewSet(viewsets.ModelViewSet):
         user_id = self.request.headers.get('userId')
         unread_notifications = Notification.objects.filter(userId=user_id, read=False)
         serializer = self.get_serializer(unread_notifications, many=True)
-
-       
-        unread.delay(user_id)
-
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
@@ -57,8 +54,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
         user_id = self.request.headers.get('userId')
         message = request.data.get('message', 'No message provided')
         notification_type = request.data.get('notification_type', 'info')
-
-        # Enviar la tarea asincrónica para crear una notificación
-        send_notification.delay(user_id, notification_type, message)
+        notification = Notification.objects.create(userId=user_id, message=message, notification_type=notification_type)
+        notification.save()
+        
 
         return Response({'status': 'Notification enqueued'})

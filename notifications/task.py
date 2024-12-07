@@ -1,32 +1,45 @@
 from celery import shared_task
 from notifications.models import Notification
-import pika
-import json 
-
-#SE TIENE QUE ESPECIFICAR LA TAREA EN EL APIGATEWAY
-
 @shared_task(name='notifications.tasks.send_notification')
-def send_notification(user_id, notification_type, message):
+def send_notification(userId, notification_type, message):
     Notification.objects.create(
-        user_id=user_id, 
+        userId=userId,  
         notification_type=notification_type,
         message=message,
         read=False
     )
-    return f"Notification sent to user {user_id} with message: {message}"
-
+    return f"Notificación enviada al usuario {userId} con el mensaje: {message}"
 
 @shared_task(name='notifications.tasks.mark_as_read')
-def mark_as_read(user_id):
-    Notification.objects.filter(user_id=user_id, read=False).update(read=True)
-    return f"Notifications for user {user_id} marked as read"
+def mark_as_read(userId):
+    Notification.objects.filter(userId=userId, read=False).update(read=True)
+    return f"Notifications for user {userId} marked as read"
 
 
 @shared_task(name='notifications.tasks.unread')
-def unread(user_id):
-    unread_notifications = Notification.objects.filter(userId=user_id, read=False)
+def unread(userId):
+    unread_notifications = Notification.objects.filter(userId=userId, read=False)
     result = [
         {"id": n.id, "message": n.message, "read": n.read}
         for n in unread_notifications
     ]
     return result
+
+
+@shared_task(name='notifications.tasks.generate_report')
+def generate_report():
+    total_notifications = Notification.objects.count()
+    unread_count = Notification.objects.filter(read=False).count()
+    return {
+        "total": total_notifications,
+        "unread": unread_count,
+        "read_percentage": 100 * (total_notifications - unread_count) / total_notifications if total_notifications else 0,
+    }
+    
+@shared_task(name='notifications.tasks.send_daily_summary')
+def send_daily_summary(userId):
+    notifications = Notification.objects.filter(userId=userId, read=False)
+    notification_messages = [notification.message for notification in notifications]
+    summary_message = f"Daily summary sent to user {userId}. Notifications: " + ", ".join(notification_messages)
+    return summary_message
+
