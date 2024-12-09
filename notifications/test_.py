@@ -2,7 +2,25 @@ import pytest
 from notifications.models import Notification
 from notifications.task import *
 
+### TEST DB
 
+@pytest.mark.django_db
+def test_create_notification():
+    userId = 1
+    notification_type = "info"
+    message = "Test notification"
+    Notification.objects.create(userId=userId, notification_type=notification_type, message=message)
+    notification = Notification.objects.get(userId=userId, notification_type=notification_type)
+    assert notification.message == message
+
+@pytest.mark.django_db
+def test_find_notification():
+    userId = 1
+    notification_type = "info"
+    message = "Test notification"
+    Notification.objects.create(userId=userId, notification_type=notification_type, message=message)
+    notification = Notification.objects.get(userId=userId, notification_type=notification_type)
+    assert notification.message == message
 
 ### TEST CELEY
 
@@ -45,6 +63,7 @@ def test_generate_report():
     assert result["unread"] == 1
     assert result["read_percentage"] == 50.0
 
+
 @pytest.mark.django_db
 def test_send_daily_summary():
     userId = 1
@@ -53,6 +72,4 @@ def test_send_daily_summary():
     result = send_daily_summary.apply(args=(userId,)).get()
     assert "Notification 1" in result
     assert "Notification 2" in result
-    assert result == f"Daily summary sent to user {userId}"
-    
-### TEST VIEWS
+    assert result == f"Daily summary sent to user {userId}. Notifications: Notification 1, Notification 2"
